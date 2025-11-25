@@ -9,6 +9,11 @@ permissions:
 on:
   workflow_dispatch:
 
+# Cancel any existing runs if new code is pushed to avoid multiple simultaneous instances
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   CI:
     runs-on: ubuntu-latest

@@ -1,0 +1,98 @@
+name: Deploy
+run-name: deploy-${{ github.head_ref || github.ref_name }}
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches: # Trigger only if the PR targets main (remove these two lines to trigger on all PRs)
+      - main
+
+# Cancel any existing runs if new code is pushed to avoid multiple simultaneous instances
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  findArtifacts:
+    # Only run if merged or manually triggered
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      runId: ${{ steps.packedArtifact.outputs.runId }}
+    steps:
+      - name: Find packed artifact run id
+        uses: actions/github-script@v8
+        id: packedArtifact
+        env:
+          WORKFLOW_ID: "verify-and-build.yml"
+          ARTIFACT_NAME: "packed"
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const workflowId = process.env.WORKFLOW_ID
+            const artifactName = process.env.ARTIFACT_NAME
+            const branchName = context.head_ref ??
+              context.payload?.pull_request?.head?.ref ??
+              context.ref?.replace("refs/heads/", "")
+
+            if (!workflowId || !artifactName || !branchName) {
+              throw new Error('workflowId, artifactName or branchName not defined');
+            }
+
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: workflowId,
+              branch: branchName,
+              status: 'success',
+              per_page: 1
+            });
+            const [firstRun] = runs?.data?.workflow_runs ?? [];
+            if (!firstRun) {
+              throw new Error(`No successful runs found for ${workflowId} workflow`);
+            }
+            const {id, html_url, pull_requests, repository} = firstRun ?? {}
+            const [pr] = pull_requests ?? []
+            console.log(`Last successful run id: ${id}`);
+            if (!id) {
+              throw new Error('run Id not found');
+            }
+
+            core.notice(`Artifact source run: ${html_url}`);
+            if (pr) {
+              core.notice(`Artifact PR: ${repository?.html_url}/pull/${pr.number}`);
+            }
+
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: firstRun.id,
+            });
+            const packedArtifact = artifacts?.data?.artifacts?.find(a => a.name === artifactName);
+            if (!packedArtifact) {
+              console.log(`No artifact named ${artifactName} found in run ${id}`);
+              return
+            }
+
+            core.setOutput('runId', id);
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: findArtifacts
+    if: needs.findArtifacts.outputs.runId != ''
+    steps:
+      - name: Download packed
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          name: packed
+          path: ${{ runner.temp }}/artifacts
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.findArtifacts.outputs.runId }}
+      
+      - name: Show artifact content
+        shell: bash
+        run: |
+          cat ${{ runner.temp }}/artifacts/build.txt
