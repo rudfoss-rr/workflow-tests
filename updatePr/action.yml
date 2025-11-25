@@ -21,6 +21,7 @@ runs:
       id: prNumber
       shell: bash
       env:
+        GH_TOKEN: ${{ inputs.githubToken }}
         INPUT_PR_NUMBER: ${{ inputs.prNumber }}
       run: |
         if [ -n "$INPUT_PR_NUMBER" ]; then
