@@ -60,13 +60,6 @@ jobs:
           echo "$CONTENT - $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > build.txt
           echo "Build succeeded."
           
-      - name: Replace placeholder
-        uses: ./updatePr
-        with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          placeholder: addStuff
-          content: "' | env"
-
       - name: Publish build artifact
         uses: actions/upload-artifact@v5
         with:

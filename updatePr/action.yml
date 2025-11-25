@@ -57,7 +57,7 @@ runs:
         currentBody=$(gh pr view "$PR_NUMBER" --json body -q .body)
         
         # Prepare new content with placeholder tags
-        newContent="<!-- PLACEHOLDER:$PLACEHOLDER -->$CONTENT<!-- /PLACEHOLDER:$PLACEHOLDER -->"
+        newContent="<\!-- PLACEHOLDER:$PLACEHOLDER -->$CONTENT<\!-- /PLACEHOLDER:$PLACEHOLDER -->"
         
         # Replace placeholder with timestamp
         newBody=$(echo "$currentBody" | sed '/<!-- PLACEHOLDER:$PLACEHOLDER -->/,/<!-- \/PLACEHOLDER:$PLACEHOLDER -->/c\$newContent')
