@@ -41,7 +41,7 @@ runs:
     - name: Update PR description
       shell: bash
       env:
-        GITHUB_TOKEN: ${{ inputs.githubToken }}
+        GH_TOKEN: ${{ inputs.githubToken }}
         PR_NUMBER: ${{ steps.prNumber.outputs.prNumber }}
         PLACEHOLDER: ${{ inputs.placeholder }}
         CONTENT: ${{ inputs.content }}
