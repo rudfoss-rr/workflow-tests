@@ -95,7 +95,7 @@ jobs:
             timestamp=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
             
             # Replace placeholder with timestamp
-            newBody=$(echo "$template_content" | sed '/<!-- PLACEHOLDER:main -->/,/<!-- \/PLACEHOLDER:main -->/c\<!-- PLACEHOLDER:main -->\${RUN_ID} - ${timestamp}\<!-- /PLACEHOLDER:main -->')
+            newBody=$(echo "$template_content" | sed '/<!-- PLACEHOLDER:main -->/,/<!-- \/PLACEHOLDER:main -->/c\<!-- PLACEHOLDER:main -->${RUN_ID} - ${timestamp}<!-- /PLACEHOLDER:main -->')
             
             # Update PR description
             echo "Updating PR $PR_NUMBER description: $newBody"
