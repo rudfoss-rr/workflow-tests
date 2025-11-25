@@ -1,0 +1,63 @@
+name: Verify and Build
+run-name: verify-and-build-${{ github.ref_name }}
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+on:
+  workflow_dispatch:
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    if: github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Build
+        shell: bash
+        env:
+          CONTENT: ${{ github.ref }}
+        run: |
+          echo "$CONTENT - $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > build.txt
+          echo "Build succeeded."
+
+      # - name: Update PR with affected projects
+      #   if: github.event_name == 'pull_request' || github.event.pull_request.number != ''
+      #   shell: bash
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     # Get PR number
+      #     PR_NUMBER=$(gh pr view --json number -q .number 2>/dev/null || echo "")
+
+      #     if [ -z "$PR_NUMBER" ]; then
+      #       echo "::warning::No associated pull request found"
+      #       exit 0
+      #     fi
+
+      #     # Get affected projects list
+      #     affectedProjects=$(pnpm exec nx show projects --affected --sep ",")
+      #     affectedProjectsList=$(echo $affectedProjects | tr ',' '\n' | sed 's/^/- /' | tr '\n' '\n')
+
+      #     # Get current PR body
+      #     currentBody=$(gh pr view $PR_NUMBER --json body -q .body)
+
+      #     # Replace placeholder with affected projects
+      #     newBody=$(echo "$currentBody" | sed "s|<!-- PLACEHOLDER: AffectedProjects -->|- **Affected Projects:**\n$affectedProjectsList|")
+
+      #     # Update PR description
+      #     gh pr edit $PR_NUMBER --body "$newBody"
+
+      #     echo "::notice::Updated PR #$PR_NUMBER with affected projects"
+
+      - name: Publish build artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: packed
+          path: build.txt
+          retention-days: 3
+          
