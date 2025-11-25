@@ -88,16 +88,15 @@ jobs:
         run: |
           # Get current PR body
           currentBody=$(gh pr view $PR_NUMBER --json body -q .body)
+        
+          # Get current timestamp
+          timestamp=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
           
-          # Check if placeholder exists
-          if echo "$currentBody" | grep -q "<!-- PLACEHOLDER addStuff -->"; then
-            # Get current timestamp
-            timestamp=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
-            
-            # Replace placeholder with timestamp
-            newBody=$(echo "$template_content" | sed '/<!-- PLACEHOLDER:main -->/,/<!-- \/PLACEHOLDER:main -->/c\<!-- PLACEHOLDER:main -->${RUN_ID} - ${timestamp}<!-- /PLACEHOLDER:main -->')
-            
-            # Update PR description
+          # Replace placeholder with timestamp
+          newBody=$(echo "$currentBody" | sed '/<!-- PLACEHOLDER:main -->/,/<!-- \/PLACEHOLDER:main -->/c\<!-- PLACEHOLDER:main -->${RUN_ID} - ${timestamp}<!-- /PLACEHOLDER:main -->')
+          
+          # Only update if the body has changed
+          if [ "$currentBody" != "$newBody" ]; then
             echo "Updating PR $PR_NUMBER description: $newBody"
             gh pr edit $PR_NUMBER --body "$newBody"
           fi
