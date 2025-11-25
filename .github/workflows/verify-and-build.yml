@@ -1,5 +1,5 @@
 name: Verify and Build
-run-name: ${{ github.ref_name }}
+run-name: Verify and Build - ${{ github.ref_name }}
 
 permissions:
   contents: read

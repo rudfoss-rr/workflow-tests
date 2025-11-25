@@ -1,5 +1,5 @@
 name: Deploy
-run-name: ${{ github.head_ref || github.ref_name }} - ${{ github.event_name }}
+run-name: Deploy - ${{ github.head_ref || github.ref_name }} - ${{ github.event_name }}
 
 permissions:
   contents: read
