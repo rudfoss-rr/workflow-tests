@@ -55,7 +55,6 @@ runs:
 
         # Get current PR body
         currentBody=$(gh pr view "$PR_NUMBER" --json body -q .body)
-        echo "Current body: $currentBody"
         
         # Prepare new content with placeholder tags
         newContent="<!-- PLACEHOLDER:$PLACEHOLDER -->$CONTENT<!-- /PLACEHOLDER:$PLACEHOLDER -->"
@@ -67,4 +66,6 @@ runs:
         if [ "$currentBody" != "$newBody" ]; then
           echo "Updating PR $PR_NUMBER description"
           gh pr edit "$PR_NUMBER" --body "$newBody"
+        else
+          echo "New body is unchanged $newBody"
         fi
