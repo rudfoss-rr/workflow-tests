@@ -1,5 +1,5 @@
 name: Verify and Build
-run-name: Verify and Build from ${{ github.ref_name }}
+run-name: ${{ github.ref_name }}
 
 permissions:
   contents: read
@@ -21,6 +21,36 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v5
+
+      - name: Log GitHub Context Information
+        shell: bash
+        run: |
+          echo "=== GitHub Context ==="
+          echo '${{ toJSON(github) }}'
+          echo ""
+          echo "=== Job Context ==="
+          echo '${{ toJSON(job) }}'
+          echo ""
+          echo "=== Steps Context ==="
+          echo '${{ toJSON(steps) }}'
+          echo ""
+          echo "=== Runner Context ==="
+          echo '${{ toJSON(runner) }}'
+          echo ""
+          echo "=== Strategy Context ==="
+          echo '${{ toJSON(strategy) }}'
+          echo ""
+          echo "=== Matrix Context ==="
+          echo '${{ toJSON(matrix) }}'
+          echo ""
+          echo "=== Secrets Context ==="
+          echo "Secrets are masked and cannot be displayed"
+          echo ""
+          echo "=== Vars Context ==="
+          echo '${{ toJSON(vars) }}'
+          echo ""
+          echo "=== Env Context ==="
+          echo '${{ toJSON(env) }}'
 
       - name: Build
         shell: bash
