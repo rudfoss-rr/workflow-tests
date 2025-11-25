@@ -1,5 +1,9 @@
 name: Deploy
-run-name: deploy-${{ github.head_ref || github.ref_name }}
+run-name: Deploy from ${{ github.head_ref || github.ref_name }}
+
+permissions:
+  contents: read
+  actions: read
 
 on:
   workflow_dispatch:
