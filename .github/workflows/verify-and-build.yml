@@ -94,7 +94,7 @@ jobs:
           timestamp=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
           
           # Replace placeholder with timestamp
-          newBody=$(echo "$currentBody" | sed '/<!-- PLACEHOLDER:main -->/,/<!-- \/PLACEHOLDER:main -->/c\<!-- PLACEHOLDER:main -->${RUN_ID} - ${timestamp}<!-- /PLACEHOLDER:main -->')
+          newBody=$(echo "$currentBody" | sed '/<!-- PLACEHOLDER:main -->/,/<!-- \/PLACEHOLDER:main -->/c\<!-- PLACEHOLDER:main -->Data: ${RUN_ID} - ${timestamp}<!-- /PLACEHOLDER:main -->')
           echo "New body: $newBody"
           
           # Only update if the body has changed
