@@ -48,10 +48,10 @@ runs:
         CONTENT: ${{ inputs.content }}
       run: |
         # Validate placeholder format
-        if ! echo "$PLACEHOLDER" | grep -qE '^[a-zA-Z0-9]{1,32}$'; then
-          echo "Error: placeholder must match regex ^[a-z0-9]{1,32}$" >&2
-          exit 1
-        fi
+        # if ! echo "$PLACEHOLDER" | grep -qE '^[a-zA-Z0-9]{1,32}$'; then
+        #   echo "Error: placeholder must match regex ^[a-z0-9]{1,32}$" >&2
+        #   exit 1
+        # fi
 
         # Get current PR body
         currentBody=$(gh pr view "$PR_NUMBER" --json body -q .body)
