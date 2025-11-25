@@ -1,5 +1,9 @@
 FROM mcr.microsoft.com/devcontainers/base:noble
 
+# Copy RR root CA certificate
+COPY ./cert.crt /usr/local/share/ca-certificates
+RUN update-ca-certificates
+
 RUN apt-get update -y \
 	&& apt-get upgrade -y \
 	&& apt-get clean -y \
