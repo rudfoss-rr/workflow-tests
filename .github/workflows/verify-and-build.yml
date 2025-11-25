@@ -71,8 +71,10 @@ jobs:
           PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --state open --json number --jq '.[0].number')
           
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            echo "No associated PR found"
             echo "prNumber=" >> $GITHUB_OUTPUT
           else
+            echo "Found assocuated PR: $PR_NUMBER"
             echo "prNumber=$PR_NUMBER" >> $GITHUB_OUTPUT
           fi
 
@@ -96,6 +98,7 @@ jobs:
             newBody=$(echo "$currentBody" | sed "s|<!-- PLACEHOLDER addStuff --><!-- /PLACEHOLDER -->|<!-- PLACEHOLDER addStuff -->${RUN_ID} - ${timestamp}<!-- /PLACEHOLDER -->|")
             
             # Update PR description
+            echo "Updating PR $PR_NUMBER description: $newBody"
             gh pr edit $PR_NUMBER --body "$newBody"
           fi
 
