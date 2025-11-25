@@ -87,18 +87,20 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           # Get current PR body
-          currentBody=$(gh pr view $PR_NUMBER --json body -q .body)
+          currentBody=$(gh pr view "$PR_NUMBER" --json body -q .body)
+          echo "Current body: $currentBody"
         
           # Get current timestamp
           timestamp=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
           
           # Replace placeholder with timestamp
           newBody=$(echo "$currentBody" | sed '/<!-- PLACEHOLDER:main -->/,/<!-- \/PLACEHOLDER:main -->/c\<!-- PLACEHOLDER:main -->${RUN_ID} - ${timestamp}<!-- /PLACEHOLDER:main -->')
+          echo "New body: $newBody"
           
           # Only update if the body has changed
           if [ "$currentBody" != "$newBody" ]; then
             echo "Updating PR $PR_NUMBER description: $newBody"
-            gh pr edit $PR_NUMBER --body "$newBody"
+            gh pr edit "$PR_NUMBER" --body "$newBody"
           fi
 
       - name: Publish build artifact
