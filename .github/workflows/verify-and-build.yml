@@ -60,34 +60,44 @@ jobs:
           echo "$CONTENT - $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > build.txt
           echo "Build succeeded."
 
-      # - name: Update PR with affected projects
-      #   if: github.event_name == 'pull_request' || github.event.pull_request.number != ''
-      #   shell: bash
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     # Get PR number
-      #     PR_NUMBER=$(gh pr view --json number -q .number 2>/dev/null || echo "")
+      - name: Get PR number for workflow_dispatch
+        if: github.event_name == 'workflow_dispatch'
+        id: getPr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Search for open PRs from the current branch
+          PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --state open --json number --jq '.[0].number')
+          
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            echo "prNumber=" >> $GITHUB_OUTPUT
+          else
+            echo "prNumber=$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
 
-      #     if [ -z "$PR_NUMBER" ]; then
-      #       echo "::warning::No associated pull request found"
-      #       exit 0
-      #     fi
-
-      #     # Get affected projects list
-      #     affectedProjects=$(pnpm exec nx show projects --affected --sep ",")
-      #     affectedProjectsList=$(echo $affectedProjects | tr ',' '\n' | sed 's/^/- /' | tr '\n' '\n')
-
-      #     # Get current PR body
-      #     currentBody=$(gh pr view $PR_NUMBER --json body -q .body)
-
-      #     # Replace placeholder with affected projects
-      #     newBody=$(echo "$currentBody" | sed "s|<!-- PLACEHOLDER: AffectedProjects -->|- **Affected Projects:**\n$affectedProjectsList|")
-
-      #     # Update PR description
-      #     gh pr edit $PR_NUMBER --body "$newBody"
-
-      #     echo "::notice::Updated PR #$PR_NUMBER with affected projects"
+      - name: Add timestamp to PR placeholder
+        if: steps.getPr.outputs.prNumber != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.getPr.outputs.prNumber }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          # Get current PR body
+          currentBody=$(gh pr view $PR_NUMBER --json body -q .body)
+          
+          # Check if placeholder exists
+          if echo "$currentBody" | grep -q "<!-- PLACEHOLDER addStuff -->"; then
+            # Get current timestamp
+            timestamp=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+            
+            # Replace placeholder with timestamp
+            newBody=$(echo "$currentBody" | sed "s|<!-- PLACEHOLDER addStuff --><!-- /PLACEHOLDER -->|<!-- PLACEHOLDER addStuff -->${RUN_ID} - ${timestamp}<!-- /PLACEHOLDER -->|")
+            
+            # Update PR description
+            gh pr edit $PR_NUMBER --body "$newBody"
+          fi
 
       - name: Publish build artifact
         uses: actions/upload-artifact@v5
