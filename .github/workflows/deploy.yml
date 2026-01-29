@@ -1,0 +1,48 @@
+name: Deploy
+run-name: Deploy - ${{ github.event.pull_request.number || github.head_ref || github.ref_name }}
+
+# head_ref works when triggered by PR, ref_name works when triggered manually
+permissions:
+  actions: read
+  contents: write
+  packages: write
+
+# Runs when any pr is closed and merged to main
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches: # Trigger only if the PR targets main (remove these two lines to trigger on all PRs)
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Generate tag name
+        id: tag
+        run: |
+          TAG_NAME="release-$(date +'%Y%m%d-%H%M%S')"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Create Git tag
+        run: |
+          git tag ${{ steps.tag.outputs.tag_name }}
+          git push origin ${{ steps.tag.outputs.tag_name }}
+      
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
+        run: |
+          gh release create "$TAG_NAME" --title "Release $TAG_NAME" --notes "Automated release from workflow." --draft
+          gh release upload "$TAG_NAME" build.txt --clobber
+          gh release edit "$TAG_NAME" --draft=false --latest
