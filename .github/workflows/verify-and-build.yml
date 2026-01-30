@@ -13,17 +13,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 
-env:
-  appId: 1620226  # Replace with your GitHub App ID
-
 jobs:
   CI:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v6
-        with:
-          persist-credentials: false
 
       - name: Log GitHub Context Information
         shell: bash
@@ -60,27 +55,18 @@ jobs:
         env:
           CONTENT: ${{ github.ref }}
         run: |
-          echo "$CONTENT - $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > build.txt
+          mkdir -p packed
+          echo "$CONTENT - $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > packed/build1.txt
+          echo "$CONTENT - $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > packed/build2.txt
+          echo "$CONTENT - $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > packed/build3.txt
           echo "Build succeeded."
-
-      - uses: actions/create-github-app-token@v2
-        id: app-token
-        with:
-          # required
-          app-id: ${{ env.appId }}
-          private-key: ${{ secrets.RUDFOSS_RR_READER_PRIVATE_KEY }}
-      - name: Get GitHub App User ID
-        id: get-user-id
-        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-      - name: Commit and Push Changes
+      
+      - name: Publish artifacts
         run: |
-          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
-          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
-          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}"
-          echo "user.name:     $(git config get --global user.name)"
-          echo "user.email:    $(git config get --global user.email)"
-          echo "remote.url:    $(git config get remote.origin.url)"
-          git add .
-          git commit -m "Auto-generated changes" || echo "No changes to commit"
-          git push origin HEAD:${{ github.ref_name }}
-          
+          for file in packed/*; do
+            [ -f "$file" ] || continue
+            filename=$(basename "$file")
+            echo "::notice::Uploading $filename"
+            # Use the upload-artifact action via npx
+            npx @actions/artifact upload "$filename" "$file"
+          done
